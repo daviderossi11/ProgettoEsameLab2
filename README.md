@@ -47,6 +47,7 @@ make
 ./server.py 5 -r 2 -w 4 -v &  # parte il server con 5 thread che a sua volta fa partire l'archivio
 ./client2 file1 file2         # scrive dati sull'archivio
 ./client1 file3               # interroga l'archivio
+pkill -INT -f server.py       # manda un segnale SIGINT al server che manderà un segnale SIGTERM a archivio che terminerà
 ```
 
 ## Struttura file del progetto
