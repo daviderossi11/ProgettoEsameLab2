@@ -34,8 +34,6 @@ int xpipe(int pipefd[2], int linea, char *file);
 
 
 // memoria condivisa POSIX
-int xshm_open(const char *name, int oflag, mode_t mode, int linea, char *file);
-int xshm_unlink(const char *name, int linea, char *file);
 int xftruncate(int fd, off_t length, int linea, char *file);
 void *simple_mmap(size_t length, int fd, int linea, char *file);
 int xmunmap(void *addr, size_t length, int linea, char *file);
