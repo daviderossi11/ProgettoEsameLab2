@@ -1,0 +1,53 @@
+#!/usr/bin/env python3
+
+import socket
+import argparse
+import os
+import struct
+
+# Informazioni sul server
+SERVER_IP = "127.0.0.1"
+PORT = 54251
+MAX_SEQUENCE_LENGTH = 2048
+
+# Funzione per inviare i dati al server
+def send_data(sock, data):
+    length = len(data)
+    assert length <= MAX_SEQUENCE_LENGTH, "La lunghezza dei dati supera il limite consentito"
+    length_bytes = struct.pack("!H", length)  # Creazione del pacchetto di lunghezza in formato network (big-endian)
+    sock.sendall(length_bytes)  # Invio del pacchetto di lunghezza al server
+    sock.sendall(data)  # Invio dei dati al server
+
+def read_line(line):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.connect((SERVER_IP, PORT))
+
+        # Invio del tipo di client al server
+        client_type = "A"
+        sock.sendall(client_type.encode())
+
+        # Invio delle linee di testo una alla volta al server come sequenze di byte di tipo A
+        data = line.encode()  # Conversione della stringa in sequenza di byte in formato UTF-8
+        send_data(sock, data)
+        sock.close()
+
+
+def main():
+    # Parsing degli argomenti da linea di comando
+    parser = argparse.ArgumentParser()
+    parser.add_argument("filename", help="Nome del file di testo da inviare al server")
+    args = parser.parse_args()
+
+    # Lettura del file di testo
+    filename = args.filename
+    with open(filename, "r") as file:
+        for line in file:
+            read_line(line)
+
+    # Invio del messaggio di fine file al server
+    read_line("EOF")
+
+
+
+if __name__ == "__main__":
+    main()

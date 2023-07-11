@@ -1,0 +1,78 @@
+#!/usr/bin/env python3
+
+import socket
+import argparse
+import os
+import struct
+from concurrent.futures import ThreadPoolExecutor
+
+# Informazioni sul server
+SERVER_IP = "127.0.0.1"
+PORT = 54251
+MAX_SEQUENCE_LENGTH = 2048
+
+
+# Funzione per inviare i dati al server
+def send_data(sock, data):
+    length = len(data)
+    assert length <= MAX_SEQUENCE_LENGTH, "La lunghezza dei dati supera il limite consentito"
+    length_bytes = struct.pack("!H", length)  # Creazione del pacchetto di lunghezza in formato network (big-endian)
+    sock.sendall(length_bytes)  # Invio del pacchetto di lunghezza al server
+    sock.sendall(data)  # Invio dei dati al server
+
+
+# Funzione per inviare un file al server riga per riga
+def send_file(filename):
+    with open(filename, "r") as file:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.connect((SERVER_IP, PORT))
+
+            # Invio del tipo di client al server
+            client_type = "B"
+            sock.sendall(client_type.encode())
+
+            for line in file:
+                data = line.encode()  # Conversione della riga in sequenza di byte in formato UTF-8
+                send_data(sock, data)
+
+            # Invio della sequenza di byte di lunghezza 0 per indicare la fine dei dati
+            send_data(sock, b"")
+            sock.close()
+    return
+
+
+def main():
+    # Parsing degli argomenti da linea di comando
+    parser = argparse.ArgumentParser()
+    parser.add_argument("files", nargs="+", help="Nomi dei file da passare al programma")
+    args = parser.parse_args()
+
+    # Controllo che i nomi dei file siano validi
+    for file_name in args.files:
+        if not os.path.isfile(file_name):
+            print(f"Errore: {file_name} non è un file valido.")
+            return
+
+    # Utilizzo dei nomi dei file nel programma
+    with ThreadPoolExecutor() as executor:
+        futures = []
+        for filename in args.files:
+            future = executor.submit(send_file, filename)
+            futures.append(future)
+
+        # Attendi che tutti i thread siano completati
+        for future in futures:
+            future.result()
+
+        # Apertura di una nuova connessione per inviare il messaggio di fine lettura dei file
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.connect((SERVER_IP, PORT))
+            client_type = "B"
+            sock.sendall(client_type.encode())
+            send_data(sock,b"EOF")
+            sock.close()
+
+
+
+if __name__ == "__main__":
+    main()
