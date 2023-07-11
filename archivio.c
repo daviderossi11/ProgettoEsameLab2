@@ -27,6 +27,7 @@ void *signal_handler(void *arg) {
     int sig;
     char message[256];
     int len;
+    int ret;
 
     while (1) {
         sigwait(set, &sig);
@@ -35,12 +36,14 @@ void *signal_handler(void *arg) {
 
             // Stampa il numero di elementi presenti nella hash map
             len = sprintf(message, "THE PROCESS %ld GOT SENDEND A SIGINT SIGNAL. INSIDE THE HASHMAP WE HAVE %d ELEMENTS\n", (long)syscall(SYS_gettid), hash_size());
-            write(STDOUT_FILENO, message, len);
+            ret = write(STDOUT_FILENO, message, len);
+            if(ret<0) xtermina("ERROR IN WRITE", HERE);
         } else if (sig == SIGTERM) {
 
             // Stampa il numero di elementi presenti nella hash map e termina
             len = sprintf(message, "THE PROCESS %ld GOT SENDEND A SIGTERM SIGNAL. INSIDE THE HASHMAP WE HAVE %d ELEMENTS\n", (long)syscall(SYS_gettid), hash_size());
-            write(STDOUT_FILENO, message, len);
+            ret = write(STDOUT_FILENO, message, len);
+            if(ret<0) xtermina("ERROR IN WRITE", HERE);
             pthread_exit(NULL);
         }
     }
