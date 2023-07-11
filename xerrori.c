@@ -82,27 +82,6 @@ int xpipe(int pipefd[2], int linea, char *file) {
 }
 
 // ---------------- memoria condivisa POSIX
-int xshm_open(const char *name, int oflag, mode_t mode, int linea, char *file)
-{
-  int e = shm_open(name, oflag, mode);
-  if(e== -1) {
-    perror("Errore shm_open"); 
-    fprintf(stderr,"== %d == Linea: %d, File: %s\n",getpid(),linea,file);
-    exit(1);
-  }
-  return e;  
-}
-
-int xshm_unlink(const char *name, int linea, char *file)
-{
-  int e = shm_unlink(name);
-  if(e== -1) {
-    perror("Errore shm_unlink"); 
-    fprintf(stderr,"== %d == Linea: %d, File: %s\n",getpid(),linea,file);
-    exit(1);
-  }
-  return e;  
-}
 
 int xftruncate(int fd, off_t length, int linea, char *file)
 {
