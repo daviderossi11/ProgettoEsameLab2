@@ -1,13 +1,6 @@
 # Progetto per Esame di Laboratorio 2
 
-il progetto ha l'obbiettivo di lo sviluppo di un server per la gestione di due tipi di connessioni diverse, che interagisce con un archivio.
-Il server e i client sono scritti in Python mentre l'archivio è un programma C eseguito come sottoprocesso dal server.
-I client interagiscono, tramite il server, con una tabella hash definita nell'archivio, consentendo l'aggiunta di elementi o la lettura del numero di occorrenze di quelli già presenti.
-Gli output di lettura saranno scritti nel file `lettori.log`.
-Tutte le connessioni saranno tracciate nel file `server.log`.
-L'archivio gestisce i segnali SIGINT e SIGTERM. Alla ricezione del primo, il programma scrive su STDERR il numero di strighe distinte salvate sull'hash table e non termina, mentre per SIGTERM, il programma scrive il numero di stringhe distinte salvate sull'hash table su STDOUT e termina in modo pulito il programma.
-Il server gestisce la ricezione di SIGINT, gestendo l'eccezione e inviando un SIGTERM all'archivio.
-Se abilitato, al termine del programma verrà anche prodotto un file di log con l'output del tool Valgrind.
+Il progetto consiste nello sviluppo di un server per la gestione di due tipi di connessioni diverse, che interagisce con un archivio. Il server e i client sono scritti in Python, mentre l'archivio è un programma C eseguito come sottoprocesso dal server. I client interagiscono, tramite il server, con una tabella hash definita nell'archivio, consentendo l'aggiunta di elementi o la lettura del numero di occorrenze di quelli già presenti. Gli output di lettura saranno scritti nel file lettori.log, mentre tutte le connessioni saranno tracciate nel file server.log. L'archivio gestisce i segnali **SIGINT** e **SIGTERM**: alla ricezione del primo, il programma scrive su **STDERR** il numero di stringhe distinte salvate nell'hash table e non termina; per **SIGTERM**, il programma scrive il numero di stringhe distinte salvate nell'hash table su **STDOUT** e termina in modo pulito. Il server gestisce la ricezione di **SIGINT**, gestendo l'eccezione e inviando un SIGTERM all'archivio. Se abilitato, al termine del programma verrà anche prodotto un file di log con l'output del tool Valgrind.
 
 
 ## Come scaricare il progetto
@@ -23,7 +16,7 @@ cd ProgettoEsameLab2
 
 Il server espone diversi parametri:
 
-- `<num_threads>`: il numero massimo di thread che il server può creare per gestire le connessioni in ingresso (obbligatorio)
+- `<max_threads>`: il numero massimo di thread che il server può creare per gestire le connessioni in ingresso (obbligatorio)
 - `-r <num_readers>`: il numero di thread readers che l'archivio crea (default: 3)
 - `-w <num_writers>`: il numero di thread writers che l'archivio crea (default: 3)
 - `-v`: flag per abilitare la creazione di un file di log con l'output di Valgrind (default: non presente)
@@ -58,7 +51,7 @@ I seguenti file fanno parte del progetto:
 - `client1`: eseguibile Python per eseguire una connessione di tipo A con il server.
 - `client2`: eseguibile Python per eseguire una connessione di tipo B con il server.
 - `archivio.c`: codice sorgente dell'eseguibile `archivio` ottenuto dal `Makefile` e avviato come sottoprocesso da `server.py`.
-- `thread.c` e `thread.h` : libreria che espone funzioni per il corpo dei thread e la funzione `tokenize`usati in `archivio.c`, `thread.h` è incluso in `archivio.c`
+- `thread.c` e `thread.h` : libreria che espone funzioni per il corpo dei thread e la funzione `tokenize`usati in `archivio.c`, `thread.h` è incluso in `ar\chivio.c`
 - `buffer.c` e `buffer.h`: libreria che espone funzioni per la gestione di un buffer circolare in uno schema produttore-consumatore. `buffer.h` è incluso in `archivio.c`.
 - `hash.c` e `hash.h`: libreria che espone funzioni per la gestione dell'accesso multithread a una tabella hash. `hash.h` è incluso in `archivio.c`.
 - `xerrori.c` e `xerrori.h`: libreria che espone funzioni per la gestione degli errori. `xerrori.h` è incluso in `archivio.c`.
@@ -70,10 +63,10 @@ I seguenti file fanno parte del progetto:
 Le principali scelte implementative del progetto sono le seguenti:
 
 - Il file `server.py` e `archivio.c` sono rispettivamente realizzati in Python e in C (dove `server.py` è un eseguibile), mentre entrambi i client (`client1` e `client2`) sono eseguibili Python. Questa scelta è stata fatta poiché, per il progetto ridotto, era libera la scelta tra Python e C.
-- È stata creata la libreria `hash.c` per la gestione dell'accesso concorrente all'hash table, al fine di rendere il codice più modulare e leggibile. Analogamente,la libreria `buffer.c` è stata creata per la gestione del buffder. Così come `thread.c` è stata creata per la gestione dei corpi dei thread
+- È stata creata la libreria hash.c per la gestione dell'accesso concorrente all'hash table, al fine di rendere il codice più modulare e leggibile. Analogamente, la libreria buffer.c è stata creata per la gestione del buffer, mentre thread.c per la gestione dei corpi dei thread.
 - La funzione `int tokenize(const char *input_string, size_t length, char ***output)` utilizza la funzione `strtok_r()` al posto di `strtok()` poiché è thread-safe, essendo utilizzata in un programma multithread.
 - Per quanto riguarda l'accesso concorrente all'hash table definita in `hash.c`, è stato utilizzato uno schema scrittori/lettori sbilanciato a favore degli scrittori, poiché le operazioni di scrittura saranno più frequenti rispetto alle operazioni di lettura. Inoltre, le operazioni di scrittura modificano l'integrità dei dati, a differenza delle operazioni di lettura che possono essere eseguite in parallelo.
-- Quando `server.py` riceve il segnale **SIGINT** manda un segnale **SIGTERM** ad `archivio` che distruggerà tutti i mutex e le conditional variables, e deallocherà tutta la memoria usata (anche la tabella hash)
+- Quando `server.py` riceve il segnale **SIGINT** manda un segnale **SIGTERM** ad `archivio` che distruggerà tutti i mutex e le conditional variables, e deallocherà tutta la memoria usata (compresa la tabella hash)
 
 
 
